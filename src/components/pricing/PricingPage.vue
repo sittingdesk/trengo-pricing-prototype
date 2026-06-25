@@ -7,7 +7,6 @@ import BillingToggle from '@/components/pricing/BillingToggle.vue'
 import PlanCard from '@/components/pricing/PlanCard.vue'
 import BoostResolutionCard from '@/components/pricing/BoostResolutionCard.vue'
 import AddOnsModal from '@/components/pricing/AddOnsModal.vue'
-import CheckoutDialog from '@/components/pricing/CheckoutDialog.vue'
 import SalesDialog from '@/components/pricing/SalesDialog.vue'
 import { plans, trial, type Plan } from '@/data/plans'
 import { account } from '@/data/account'
@@ -17,11 +16,15 @@ const { state, enterResolution, closeResolution } = usePricingFlow()
 const boostHasBlockers = computed(() => state.blockers.some((b) => !b.disabled))
 const boostPlan = computed(() => plans.find((p) => p.id === 'boost')!)
 
-// Dialogs
+// Dialogs — Boost and Pro both use the Add-ons modal (with their own prices).
 const addOnsOpen = ref(false)
-const checkoutOpen = ref(false)
-const checkoutPlan = ref<Plan | null>(null)
+const addOnsPlan = ref<Plan>(boostPlan.value)
 const salesOpen = ref(false)
+
+function openAddOns(plan: Plan) {
+  addOnsPlan.value = plan
+  addOnsOpen.value = true
+}
 
 function onChoose(plan: Plan) {
   if (!plan.activatable) {
@@ -29,14 +32,12 @@ function onChoose(plan: Plan) {
     return
   }
   if (plan.id === 'boost') {
-    // Blocked → resolution view; clear → straight to the Add-ons modal (§1).
+    // Blocked → resolution view; clear → straight to the Add-ons modal.
     if (boostHasBlockers.value) enterResolution()
-    else addOnsOpen.value = true
+    else openAddOns(plan)
     return
   }
-  // Pro keeps the existing checkout (out of this spec's scope).
-  checkoutPlan.value = plan
-  checkoutOpen.value = true
+  openAddOns(plan) // Pro → same modal, Pro prices
 }
 </script>
 
@@ -78,7 +79,7 @@ function onChoose(plan: Plan) {
               <BoostResolutionCard
                 v-if="plan.id === 'boost' && state.boostResolving"
                 @close="closeResolution"
-                @choose="addOnsOpen = true"
+                @choose="openAddOns(boostPlan)"
               />
               <PlanCard v-else :plan="plan" :period="state.period" @choose="onChoose" />
             </Transition>
@@ -109,13 +110,7 @@ function onChoose(plan: Plan) {
 
       <AddOnsModal
         v-model:open="addOnsOpen"
-        :plan="boostPlan"
-        :period="state.period"
-        :account="account"
-      />
-      <CheckoutDialog
-        v-model:open="checkoutOpen"
-        :plan="checkoutPlan"
+        :plan="addOnsPlan"
         :period="state.period"
         :account="account"
       />

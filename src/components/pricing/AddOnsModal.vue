@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import Stepper from '@/components/pricing/Stepper.vue'
+import Icon from '@/components/Icon.vue'
 import type { Account } from '@/data/account'
 import type { BillingPeriod, Plan } from '@/data/plans'
 import { addOns, addOnUnit, defaultQuantities } from '@/data/addons'
@@ -21,21 +22,34 @@ const qty = reactive<Record<string, number>>({})
 const handingOff = ref(false)
 const redirected = ref(false)
 
-// Reset quantities + checkout state each time the modal opens.
-watch(open, (isOpen) => {
-  if (!isOpen) return
-  Object.assign(qty, defaultQuantities(props.plan, props.account))
-  handingOff.value = false
-  redirected.value = false
-})
+// Reset quantities + checkout state each time the modal opens (incl. if it
+// mounts already-open).
+watch(
+  open,
+  (isOpen) => {
+    if (!isOpen) return
+    Object.assign(qty, defaultQuantities(props.plan, props.account))
+    handingOff.value = false
+    redirected.value = false
+  },
+  { immediate: true },
+)
 
 const base = computed(() => props.plan.base[props.period] ?? 0)
+
+// You can't drop User Seats below the seats your current users already occupy.
+const seatFloor = computed(() =>
+  Math.max(0, props.account.users - (props.plan.includedUsers ?? 0)),
+)
+const atSeatFloor = computed(
+  () => seatFloor.value > 0 && (qty['user-seat'] ?? 0) <= seatFloor.value,
+)
 
 const lines = computed(() =>
   addOns
     .map((a) => {
       const count = qty[a.id] ?? 0
-      const unit = addOnUnit(a, props.period)
+      const unit = addOnUnit(a, props.period, props.plan)
       return { id: a.id, name: a.name, count, unit, subtotal: count * unit }
     })
     .filter((l) => l.count > 0),
@@ -82,7 +96,8 @@ function continueToCheckout() {
         <DialogHeader>
           <DialogTitle class="text-ds-title">Add-ons</DialogTitle>
           <DialogDescription class="text-ds-sm text-grey-600">
-            Boost includes 10 users & 500 conversations/mo. Add more as you need —
+            {{ plan.name }} includes {{ plan.includedUsers }} users &
+            {{ plan.includedConversations }} conversations/mo. Add more as you need —
             change anytime.
           </DialogDescription>
         </DialogHeader>
@@ -93,19 +108,36 @@ function continueToCheckout() {
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
               <p class="text-ds-sm-emphasis text-grey-900">{{ a.name }}</p>
               <p class="text-ds-xs text-grey-600">
-                €{{ addOnUnit(a, period) }}/mo {{ a.per }} · {{ a.note }}
+                €{{ addOnUnit(a, period, plan) }}/mo {{ a.per }} · {{ a.note }}
               </p>
             </div>
-            <Stepper v-model="qty[a.id]" :label="a.name.toLowerCase()" />
+            <Stepper
+              v-model="qty[a.id]"
+              :label="a.name.toLowerCase()"
+              :min="a.id === 'user-seat' ? seatFloor : 0"
+            />
           </li>
         </ul>
+
+        <!-- Seat floor: can't go below seats already in use -->
+        <div
+          v-if="atSeatFloor"
+          class="flex items-center gap-2 rounded-lg bg-grey-200 p-3"
+        >
+          <Icon name="info" :size="20" class="shrink-0 text-grey-700" />
+          <p class="text-ds-xs text-grey-700">
+            You have {{ account.users }} users. {{ plan.name }} includes
+            {{ plan.includedUsers }} — keep at least {{ seatFloor }} add-on seats, or
+            remove users to go lower.
+          </p>
+        </div>
 
         <Separator />
 
         <!-- Live price summary -->
         <div class="flex flex-col gap-2">
           <div class="flex items-baseline justify-between text-ds-sm text-grey-700">
-            <span>Boost base</span>
+            <span>{{ plan.name }} base</span>
             <span>€{{ base }}/mo</span>
           </div>
           <div

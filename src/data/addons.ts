@@ -68,6 +68,10 @@ export function defaultQuantities(plan: Plan, account: Account): Record<string, 
   }
 }
 
-export function addOnUnit(addOn: AddOn, period: BillingPeriod): number {
+/** Unit price; the User Seat uses the plan's own seat price (Boost €30, Pro €50). */
+export function addOnUnit(addOn: AddOn, period: BillingPeriod, plan?: Plan): number {
+  if (addOn.id === 'user-seat' && plan?.additionalSeat) {
+    return plan.additionalSeat[period]
+  }
   return addOn.unit[period]
 }

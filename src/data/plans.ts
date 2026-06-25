@@ -28,6 +28,8 @@ export interface Plan {
   customLabel?: string
   /** Seats included in the base; null for custom. */
   includedUsers: number | null
+  /** Conversations included per month; null for custom. */
+  includedConversations: number | null
   /** Per-extra-seat price; null for custom. */
   additionalSeat: PeriodPrice | null
   /** Italic seat line under the price. */
@@ -57,6 +59,7 @@ export const plans: Plan[] = [
     name: 'Boost',
     base: { monthly: 349, annually: 299 },
     includedUsers: 10,
+    includedConversations: 500,
     additionalSeat: { monthly: 30, annually: 25 },
     seatNote: 'Incl. 10 users seats',
     priceSuffix: '/month',
@@ -76,6 +79,7 @@ export const plans: Plan[] = [
     name: 'Pro',
     base: { monthly: 599, annually: 499 },
     includedUsers: 20,
+    includedConversations: 1500,
     additionalSeat: { monthly: 50, annually: 40 },
     seatNote: 'Incl. 20 users seats',
     priceSuffix: '/month',
@@ -97,6 +101,7 @@ export const plans: Plan[] = [
     base: { monthly: null, annually: null },
     customLabel: 'Custom',
     includedUsers: null,
+    includedConversations: null,
     additionalSeat: null,
     seatNote: 'Per user/month',
     priceSuffix: '',
