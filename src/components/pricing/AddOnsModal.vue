@@ -82,7 +82,7 @@ function continueToCheckout() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent class="flex max-h-[85vh] flex-col sm:max-w-lg">
       <!-- Chargebee handoff -->
       <template v-if="handingOff">
         <div class="flex flex-col items-center gap-3 py-8 text-center">
@@ -114,6 +114,8 @@ function continueToCheckout() {
           </DialogDescription>
         </DialogHeader>
 
+        <!-- Scrollable body; header + Total/CTA stay pinned -->
+        <div class="scroll-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <!-- Seats & usage (quantity add-ons) -->
         <div class="flex flex-col gap-2">
           <p class="text-ds-xs font-semibold text-grey-600">Seats & usage</p>
@@ -161,6 +163,7 @@ function continueToCheckout() {
             {{ plan.includedUsers }} — keep at least {{ seatFloor }} add-on seats, or
             remove users to go lower.
           </p>
+        </div>
         </div>
 
         <Separator />
