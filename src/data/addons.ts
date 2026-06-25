@@ -57,6 +57,38 @@ export const addOns: AddOn[] = [
   },
 ]
 
+/**
+ * Capability add-ons — on/off features (not quantities), billed at a flat
+ * monthly price. Modeled as purchasable add-ons, distinct from the integration
+ * blockers in the resolution list.
+ *
+ * ⚠️ PRICES ARE PLACEHOLDERS — unconfirmed (spec §6/§11).
+ */
+export interface FeatureAddOn {
+  id: string
+  name: string
+  note: string
+  price: { monthly: number; annually: number }
+  confirmed: boolean
+}
+
+export const featureAddOns: FeatureAddOn[] = [
+  {
+    id: 'voice',
+    name: 'Voice calling',
+    note: 'inbound & outbound calls',
+    price: { monthly: 25, annually: 25 },
+    confirmed: false,
+  },
+  {
+    id: 'broadcasting',
+    name: 'WhatsApp Broadcasting',
+    note: 'bulk campaigns',
+    price: { monthly: 20, annually: 20 },
+    confirmed: false,
+  },
+]
+
 /** Default quantities: User Seat pre-filled to cover current users (spec §6). */
 export function defaultQuantities(plan: Plan, account: Account): Record<string, number> {
   const includedUsers = plan.includedUsers ?? 0

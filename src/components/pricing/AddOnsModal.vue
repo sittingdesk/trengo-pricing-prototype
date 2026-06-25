@@ -10,25 +10,28 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import Stepper from '@/components/pricing/Stepper.vue'
+import { Switch } from '@/components/ui/switch'
 import Icon from '@/components/Icon.vue'
 import type { Account } from '@/data/account'
 import type { BillingPeriod, Plan } from '@/data/plans'
-import { addOns, addOnUnit, defaultQuantities } from '@/data/addons'
+import { addOns, addOnUnit, defaultQuantities, featureAddOns } from '@/data/addons'
 
 const props = defineProps<{ plan: Plan; period: BillingPeriod; account: Account }>()
 const open = defineModel<boolean>('open', { required: true })
 
 const qty = reactive<Record<string, number>>({})
+const enabled = reactive<Record<string, boolean>>({})
 const handingOff = ref(false)
 const redirected = ref(false)
 
-// Reset quantities + checkout state each time the modal opens (incl. if it
-// mounts already-open).
+// Reset quantities + feature toggles + checkout state each time the modal opens
+// (incl. if it mounts already-open).
 watch(
   open,
   (isOpen) => {
     if (!isOpen) return
     Object.assign(qty, defaultQuantities(props.plan, props.account))
+    featureAddOns.forEach((f) => (enabled[f.id] = false))
     handingOff.value = false
     redirected.value = false
   },
@@ -55,8 +58,17 @@ const lines = computed(() =>
     .filter((l) => l.count > 0),
 )
 
+const featureLines = computed(() =>
+  featureAddOns
+    .filter((f) => enabled[f.id])
+    .map((f) => ({ id: f.id, name: f.name, price: f.price[props.period] })),
+)
+
 const total = computed(
-  () => base.value + lines.value.reduce((sum, l) => sum + l.subtotal, 0),
+  () =>
+    base.value +
+    lines.value.reduce((sum, l) => sum + l.subtotal, 0) +
+    featureLines.value.reduce((sum, l) => sum + l.price, 0),
 )
 
 function continueToCheckout() {
@@ -102,22 +114,41 @@ function continueToCheckout() {
           </DialogDescription>
         </DialogHeader>
 
-        <!-- Add-on rows -->
-        <ul class="flex flex-col gap-3">
-          <li v-for="a in addOns" :key="a.id" class="flex items-center gap-3">
-            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-              <p class="text-ds-sm-emphasis text-grey-900">{{ a.name }}</p>
-              <p class="text-ds-xs text-grey-600">
-                €{{ addOnUnit(a, period, plan) }}/mo {{ a.per }} · {{ a.note }}
-              </p>
-            </div>
-            <Stepper
-              v-model="qty[a.id]"
-              :label="a.name.toLowerCase()"
-              :min="a.id === 'user-seat' ? seatFloor : 0"
-            />
-          </li>
-        </ul>
+        <!-- Seats & usage (quantity add-ons) -->
+        <div class="flex flex-col gap-2">
+          <p class="text-ds-xs font-semibold text-grey-600">Seats & usage</p>
+          <ul class="flex flex-col gap-3">
+            <li v-for="a in addOns" :key="a.id" class="flex items-center gap-3">
+              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <p class="text-ds-sm-emphasis text-grey-900">{{ a.name }}</p>
+                <p class="text-ds-xs text-grey-600">
+                  €{{ addOnUnit(a, period, plan) }}/mo {{ a.per }} · {{ a.note }}
+                </p>
+              </div>
+              <Stepper
+                v-model="qty[a.id]"
+                :label="a.name.toLowerCase()"
+                :min="a.id === 'user-seat' ? seatFloor : 0"
+              />
+            </li>
+          </ul>
+        </div>
+
+        <!-- Additional features (on/off capability add-ons) -->
+        <div class="flex flex-col gap-2">
+          <p class="text-ds-xs font-semibold text-grey-600">Additional features</p>
+          <ul class="flex flex-col gap-3">
+            <li v-for="f in featureAddOns" :key="f.id" class="flex items-center gap-3">
+              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <p class="text-ds-sm-emphasis text-grey-900">{{ f.name }}</p>
+                <p class="text-ds-xs text-grey-600">
+                  +€{{ f.price[period] }}/mo · {{ f.note }}
+                </p>
+              </div>
+              <Switch v-model="enabled[f.id]" :aria-label="f.name" />
+            </li>
+          </ul>
+        </div>
 
         <!-- Seat floor: can't go below seats already in use -->
         <div
@@ -147,6 +178,14 @@ function continueToCheckout() {
           >
             <span>{{ l.count }} × {{ l.name }} (€{{ l.unit }})</span>
             <span>€{{ l.subtotal }}/mo</span>
+          </div>
+          <div
+            v-for="l in featureLines"
+            :key="l.id"
+            class="flex items-baseline justify-between text-ds-sm text-grey-700"
+          >
+            <span>{{ l.name }}</span>
+            <span>€{{ l.price }}/mo</span>
           </div>
           <Separator class="my-1" />
           <div class="flex items-baseline justify-between">
