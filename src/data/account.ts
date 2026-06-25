@@ -1,0 +1,41 @@
+/**
+ * Current account usage + the features that block subscribing to Boost.
+ *
+ * In production these blockers are BACKEND-PROVIDED (the backend returns the
+ * active features that aren't in Boost, each with the Settings path where it's
+ * switched off). The frontend only renders + re-queries them.
+ *
+ * Per spec: rows are breadcrumb LOCATORS, not tap targets. Security
+ * entitlements (SSO/2FA) are intentionally excluded (spec §11.3).
+ */
+
+export interface Blocker {
+  id: string
+  /** Feature name, e.g. "HubSpot · Sales pipeline". */
+  name: string
+  /** Where to switch it off, e.g. "Settings › Apps & Integrations". */
+  path: string
+}
+
+export interface Account {
+  /** Current seat count on the account. */
+  users: number
+  /** Monthly cost of conversation overage, if any (0 = none in this demo). */
+  conversationOverage: number
+  /** Features that block Boost. Seeded large to exercise the scrolling list. */
+  boostBlockers: Blocker[]
+}
+
+export const account: Account = {
+  users: 25,
+  conversationOverage: 0,
+  boostBlockers: [
+    { id: 'hubspot', name: 'HubSpot · Sales pipeline', path: 'Settings › Apps & Integrations' },
+    { id: 'salesforce', name: 'Salesforce · Lead sync', path: 'Settings › Apps & Integrations' },
+    { id: 'pipedrive', name: 'Pipedrive · Deals', path: 'Settings › Apps & Integrations' },
+    { id: 'zendesk', name: 'Zendesk · Tickets', path: 'Settings › Apps & Integrations' },
+    { id: 'intercom', name: 'Intercom · Conversations', path: 'Settings › Apps & Integrations' },
+    { id: 'shopify', name: 'Shopify · Orders', path: 'Settings › Apps & Integrations' },
+    { id: 'mailchimp', name: 'Mailchimp · Audiences', path: 'Settings › Apps & Integrations' },
+  ],
+}

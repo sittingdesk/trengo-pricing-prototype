@@ -1,0 +1,266 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Inter — design.md §2.1 (weights 400/500/600/700) */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===========================================================================
+   Trengo Design System tokens — SOURCE OF TRUTH: design.md
+   Palette, fonts, radius and shadows are registered as Tailwind theme tokens
+   so they are available as utilities (bg-grey-900, rounded-pill, shadow-300…).
+   Never hard-code a hex/px in a component when a token below exists.
+   =========================================================================== */
+@theme {
+  /* Fonts — §2.1 */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Grey scale — §1.1 (grey-500 added from Trengo DS Figma variables;
+     not in design.md §1.1, used for de-emphasised inline hints) */
+  --color-grey-900: #111213;
+  --color-grey-800: #292c2e;
+  --color-grey-700: #4d5256;
+  --color-grey-600: #70767b;
+  --color-grey-500: #b8bdc1;
+  --color-grey-400: #c6c9cd;
+  --color-grey-300: #e1e3e5;
+  --color-grey-200: #f4f5f6;
+  --color-grey-100: #f9fafb;
+
+  /* Leaf (brand green/teal) — §1.3 */
+  --color-leaf-100: #e3f6f3;
+  --color-leaf-200: #ade5dc;
+  --color-leaf-300: #76ccbe;
+  --color-leaf-400: #49b2a1;
+  --color-leaf-500: #249888;
+  --color-leaf-600: #177b6b;
+  --color-leaf-700: #0c5d51;
+  --color-leaf-800: #054037;
+  --color-leaf-900: #01221d;
+
+  /* Sky (blue) — §1.3 */
+  --color-sky-100: #f4fcff;
+  --color-sky-200: #d7f3ff;
+  --color-sky-300: #bbeaff;
+  --color-sky-400: #9ee0ff;
+  --color-sky-500: #81d7ff;
+  --color-sky-600: #4fa1c8;
+  --color-sky-700: #286f90;
+  --color-sky-800: #0f4159;
+  --color-sky-900: #021721;
+
+  /* Purple — §1.3 */
+  --color-purple-100: #fbf4ff;
+  --color-purple-200: #f3ddff;
+  --color-purple-300: #eac6ff;
+  --color-purple-400: #e1b0ff;
+  --color-purple-500: #d999ff;
+  --color-purple-600: #a965d3;
+  --color-purple-700: #7e3ca7;
+  --color-purple-800: #571d7c;
+  --color-purple-900: #350950;
+
+  /* Peach (orange) — §1.3 */
+  --color-peach-100: #ffebe6;
+  --color-peach-200: #ffd0c5;
+  --color-peach-300: #ffb6a3;
+  --color-peach-400: #fe9b82;
+  --color-peach-500: #fe8161;
+  --color-peach-600: #df694c;
+  --color-peach-700: #be5439;
+  --color-peach-800: #9e4129;
+  --color-peach-900: #7d2f1c;
+
+  /* Sun (yellow) — §1.3 */
+  --color-sun-50: #fffbf0;
+  --color-sun-100: #fff5db;
+  --color-sun-200: #ffedbe;
+  --color-sun-300: #ffe4a1;
+  --color-sun-400: #ffdc84;
+  --color-sun-500: #ffd467;
+  --color-sun-600: #f1b749;
+  --color-sun-700: #e2992e;
+  --color-sun-800: #d47b15;
+  --color-sun-900: #c55e00;
+
+  /* Semantic accent — §1.2 */
+  --color-error-500: #e8374c;
+
+  /* Border radius scale — §4 */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-base: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-pill: 24px;
+  --radius-full: 100px;
+
+  /* Elevation shadows — §5.1 */
+  --shadow-100: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+  --shadow-300: 0 2px 4px -1px rgba(0, 0, 0, 0.08), 0 8px 16px -2px rgba(0, 0, 0, 0.02);
+  --shadow-500: 0 4px 8px -4px rgba(0, 0, 0, 0.16), 0 12px 24px -2px rgba(0, 0, 0, 0.03);
+  --shadow-ds-inner: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* ===========================================================================
+   shadcn-vue semantic tokens, mapped onto the Trengo palette.
+   These drive shadcn components (bg-background, text-foreground, bg-primary…).
+   =========================================================================== */
+:root {
+  --radius: 12px; /* lg — cards/panels/modals, §4 */
+
+  --background: var(--color-grey-100);
+  --foreground: var(--color-grey-900);
+
+  --card: #ffffff;
+  --card-foreground: var(--color-grey-900);
+
+  --popover: #ffffff;
+  --popover-foreground: var(--color-grey-900);
+
+  /* Brand primary = Leaf — §5.2 (also drives focus ring) */
+  --primary: var(--color-leaf-500);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--color-grey-200);
+  --secondary-foreground: var(--color-grey-900);
+
+  --muted: var(--color-grey-200);
+  --muted-foreground: var(--color-grey-600);
+
+  --accent: var(--color-grey-200);
+  --accent-foreground: var(--color-grey-900);
+
+  --destructive: var(--color-error-500);
+  --destructive-foreground: #ffffff;
+
+  --border: var(--color-grey-300);
+  --input: var(--color-grey-300);
+  --ring: var(--color-leaf-500);
+
+  /* Dark-action-button override — §7.5 (.btn-dark).
+     Keeps Leaf as the brand primary while default buttons render dark. */
+  --button: var(--color-grey-900);
+  --button-foreground: #ffffff;
+  --button-hover: var(--color-grey-800);
+
+  /* Exact focus rings — §5.2 (for precise replication where needed) */
+  --shadow-focus-default: 0 0 0 4px rgba(36, 152, 136, 0.25), inset 0 0 0 1px #249888;
+  --shadow-focus-error: 0 0 0 4px #fad7db, inset 0 0 0 1px #e8374c;
+  --shadow-focus-small: 0 0 0 2px rgba(36, 152, 136, 0.25), inset 0 0 0 2px #249888;
+}
+
+/* Expose semantic tokens to Tailwind color utilities */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-button: var(--button);
+  --color-button-foreground: var(--button-foreground);
+  --color-button-hover: var(--button-hover);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ===========================================================================
+   Typography scale — §2.2 / §2.3. Use these utilities instead of ad-hoc
+   font-size/line-height/weight values.
+   =========================================================================== */
+@layer utilities {
+  .text-ds-xs {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+  }
+  .text-ds-sm {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+  .text-ds-sm-emphasis {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+  }
+  .text-ds-base {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+  }
+  .text-ds-title {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 700;
+  }
+  /* H3 / H1 — from Trengo DS Figma variables (extends design.md §2.2) */
+  .text-ds-h3 {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+  }
+  .text-ds-h1 {
+    font-size: 36px;
+    line-height: 40px;
+    font-weight: 700;
+  }
+  /* §2.3 — tabular numerals for timers/durations */
+  .nums-tabular {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  /* §2.3 — uppercased section titles */
+  .text-ds-section {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.48px;
+    color: var(--color-grey-600);
+  }
+  /* §9.2 — thin custom scrollbar (4px, Grey-400 thumb, transparent track) */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-grey-400) transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: var(--color-grey-400);
+    border-radius: var(--radius-xs);
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

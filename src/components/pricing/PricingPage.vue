@@ -1,0 +1,138 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { Button } from '@/components/ui/button'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import Icon from '@/components/Icon.vue'
+import BillingToggle from '@/components/pricing/BillingToggle.vue'
+import PlanCard from '@/components/pricing/PlanCard.vue'
+import BoostResolutionCard from '@/components/pricing/BoostResolutionCard.vue'
+import AddOnsModal from '@/components/pricing/AddOnsModal.vue'
+import CheckoutDialog from '@/components/pricing/CheckoutDialog.vue'
+import SalesDialog from '@/components/pricing/SalesDialog.vue'
+import { plans, trial, type Plan } from '@/data/plans'
+import { account } from '@/data/account'
+import { usePricingFlow } from '@/composables/usePricingFlow'
+
+const { state, enterResolution, closeResolution } = usePricingFlow()
+const boostHasBlockers = computed(() => state.blockers.some((b) => !b.disabled))
+const boostPlan = computed(() => plans.find((p) => p.id === 'boost')!)
+
+// Dialogs
+const addOnsOpen = ref(false)
+const checkoutOpen = ref(false)
+const checkoutPlan = ref<Plan | null>(null)
+const salesOpen = ref(false)
+
+function onChoose(plan: Plan) {
+  if (!plan.activatable) {
+    salesOpen.value = true // Enterprise → sales handoff, never Chargebee
+    return
+  }
+  if (plan.id === 'boost') {
+    // Blocked → resolution view; clear → straight to the Add-ons modal (§1).
+    if (boostHasBlockers.value) enterResolution()
+    else addOnsOpen.value = true
+    return
+  }
+  // Pro keeps the existing checkout (out of this spec's scope).
+  checkoutPlan.value = plan
+  checkoutOpen.value = true
+}
+</script>
+
+<template>
+  <TooltipProvider :delay-duration="150">
+    <div class="min-h-screen bg-background">
+      <!-- Sticky frosted header (§7.2 pattern) -->
+      <header class="sticky top-0 z-10 bg-background/80 backdrop-blur-[12px]">
+        <div class="mx-auto flex max-w-[868px] items-center justify-between gap-3 px-6 py-6">
+          <h1 class="text-ds-h3 text-grey-900">Choose a plan</h1>
+          <BillingToggle v-model="state.period" />
+        </div>
+      </header>
+
+      <div class="mx-auto flex max-w-[868px] flex-col gap-4 px-6 pb-12">
+        <!-- Free-trial banner -->
+        <div class="flex items-center gap-3 rounded-lg border border-border bg-card px-5 py-4">
+          <div
+            class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white text-grey-700"
+          >
+            <Icon name="package" :size="24" />
+          </div>
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <p class="text-ds-title text-grey-800">{{ trial.title }}</p>
+            <p class="text-ds-sm text-grey-700">{{ trial.description }}</p>
+          </div>
+          <span
+            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-purple-200 px-2 py-1 text-purple-800"
+          >
+            <Icon name="arrow-up-circle" :size="16" />
+            <span class="text-ds-xs font-semibold">{{ trial.daysLeft }} days left</span>
+          </span>
+        </div>
+
+        <!-- Plan cards (Boost slot swaps to the resolution view) -->
+        <div class="grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
+          <template v-for="plan in plans" :key="plan.id">
+            <Transition name="card-fade" mode="out-in">
+              <BoostResolutionCard
+                v-if="plan.id === 'boost' && state.boostResolving"
+                @close="closeResolution"
+                @choose="addOnsOpen = true"
+              />
+              <PlanCard v-else :plan="plan" :period="state.period" @choose="onChoose" />
+            </Transition>
+          </template>
+        </div>
+
+        <!-- Inline banner -->
+        <div class="flex items-center gap-2 rounded-lg border border-border bg-muted p-3">
+          <Icon name="info" :size="24" class="shrink-0 text-grey-700" />
+          <p class="flex-1 text-ds-sm text-grey-800">
+            Want a more detailed list of all the features and capabilities per plan?
+          </p>
+          <Button variant="outline">
+            View all functionalities
+            <Icon name="arrow-up-right" :size="20" />
+          </Button>
+        </div>
+      </div>
+
+      <!-- Floating help button -->
+      <button
+        type="button"
+        aria-label="Help"
+        class="fixed bottom-4 right-4 rounded-pill border border-grey-400 bg-card p-3 text-grey-700 shadow-100 transition-colors hover:bg-grey-200"
+      >
+        <Icon name="help-circle" :size="24" />
+      </button>
+
+      <AddOnsModal
+        v-model:open="addOnsOpen"
+        :plan="boostPlan"
+        :period="state.period"
+        :account="account"
+      />
+      <CheckoutDialog
+        v-model:open="checkoutOpen"
+        :plan="checkoutPlan"
+        :period="state.period"
+        :account="account"
+      />
+      <SalesDialog v-model:open="salesOpen" />
+    </div>
+  </TooltipProvider>
+</template>
+
+<style scoped>
+/* Subtle cross-fade between the Boost front and resolution views (spec §4).
+   Opacity-only, so it already respects prefers-reduced-motion. */
+.card-fade-enter-active,
+.card-fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.card-fade-enter-from,
+.card-fade-leave-to {
+  opacity: 0;
+}
+</style>
