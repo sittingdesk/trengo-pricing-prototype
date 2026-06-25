@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, useTemplateRef, watch } from 'vue'
 import {
   Dialog,
   DialogContent,
@@ -15,9 +15,14 @@ import Icon from '@/components/Icon.vue'
 import type { Account } from '@/data/account'
 import type { BillingPeriod, Plan } from '@/data/plans'
 import { addOns, addOnUnit, defaultQuantities, featureAddOns } from '@/data/addons'
+import { useScrollShadows } from '@/composables/useScrollShadows'
 
 const props = defineProps<{ plan: Plan; period: BillingPeriod; account: Account }>()
 const open = defineModel<boolean>('open', { required: true })
+
+// Edge-fade shadows for the scrollable body (same pattern as the Boost card).
+const scrollBody = useTemplateRef<HTMLElement>('scrollBody')
+const { atTop, atBottom, update } = useScrollShadows(scrollBody)
 
 const qty = reactive<Record<string, number>>({})
 const enabled = reactive<Record<string, boolean>>({})
@@ -34,6 +39,7 @@ watch(
     featureAddOns.forEach((f) => (enabled[f.id] = false))
     handingOff.value = false
     redirected.value = false
+    nextTick(update) // re-evaluate fades for the freshly-opened body
   },
   { immediate: true },
 )
@@ -82,7 +88,7 @@ function continueToCheckout() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="flex max-h-[85vh] flex-col sm:max-w-lg">
+    <DialogContent class="flex max-h-[85vh] flex-col gap-0 sm:max-w-lg">
       <!-- Chargebee handoff -->
       <template v-if="handingOff">
         <div class="flex flex-col items-center gap-3 py-8 text-center">
@@ -105,7 +111,7 @@ function continueToCheckout() {
 
       <!-- Configure add-ons -->
       <template v-else>
-        <DialogHeader>
+        <DialogHeader class="pb-4">
           <DialogTitle class="text-ds-title">Add-ons</DialogTitle>
           <DialogDescription class="text-ds-sm text-grey-600">
             {{ plan.name }} includes {{ plan.includedUsers }} users &
@@ -114,8 +120,16 @@ function continueToCheckout() {
           </DialogDescription>
         </DialogHeader>
 
-        <!-- Scrollable body; header + Total/CTA stay pinned -->
-        <div class="scroll-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+        <Separator class="-mx-6" />
+
+        <!-- Body scrolls between the dividers; header + Total/CTA stay pinned -->
+        <div class="relative -mx-6 flex min-h-0 flex-1 flex-col">
+          <div
+            ref="scrollBody"
+            class="scroll-thin min-h-0 flex-1 overflow-y-auto px-6"
+            @scroll="update"
+          >
+            <div class="flex flex-col gap-4 py-4">
         <!-- Seats & usage (quantity add-ons) -->
         <div class="flex flex-col gap-2">
           <p class="text-ds-xs font-semibold text-grey-600">Seats & usage</p>
@@ -164,14 +178,27 @@ function continueToCheckout() {
             remove users to go lower.
           </p>
         </div>
+            </div>
+          </div>
+          <!-- Edge fades dissolve content under each divider on scroll -->
+          <div
+            class="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-background to-transparent transition-opacity duration-150"
+            :class="atTop ? 'opacity-0' : 'opacity-100'"
+          />
+          <div
+            class="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent transition-opacity duration-150"
+            :class="atBottom ? 'opacity-0' : 'opacity-100'"
+          />
         </div>
 
-        <Separator />
+        <Separator class="-mx-6" />
 
-        <!-- Live price summary -->
-        <div class="flex flex-col gap-2">
-          <div class="flex items-baseline justify-between text-ds-sm text-grey-700">
-            <span>{{ plan.name }} base</span>
+        <!-- Pinned footer: live price summary + CTA -->
+        <div class="flex flex-col gap-4 pt-4">
+          <!-- Live price summary -->
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline justify-between text-ds-sm text-grey-700">
+              <span>{{ plan.name }} base</span>
             <span>€{{ base }}/mo</span>
           </div>
           <div
@@ -195,9 +222,10 @@ function continueToCheckout() {
             <span class="text-ds-sm-emphasis text-grey-900">Total</span>
             <span class="text-ds-base text-grey-900">€{{ total }}/mo</span>
           </div>
-        </div>
+          </div>
 
-        <Button class="w-full" @click="continueToCheckout">Continue to checkout</Button>
+          <Button class="w-full" @click="continueToCheckout">Continue to checkout</Button>
+        </div>
       </template>
     </DialogContent>
   </Dialog>

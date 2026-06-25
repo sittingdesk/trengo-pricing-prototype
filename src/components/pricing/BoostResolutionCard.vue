@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import Icon from '@/components/Icon.vue'
 import { usePricingFlow } from '@/composables/usePricingFlow'
+import { useScrollShadows } from '@/composables/useScrollShadows'
 
 const emit = defineEmits<{ close: []; choose: [] }>()
 const { state } = usePricingFlow()
@@ -23,7 +24,7 @@ function recheck() {
     window.setTimeout(
       () => {
         blocker.disabled = true
-        updateShadows()
+        update()
         if (i === pending.length - 1) rechecking.value = false
       },
       (i + 1) * 200,
@@ -31,20 +32,9 @@ function recheck() {
   })
 }
 
-// Scroll shadows hint that there's more content above/below the fold.
-const scrollEl = ref<HTMLElement | null>(null)
-const atTop = ref(true)
-const atBottom = ref(false)
-function updateShadows() {
-  const el = scrollEl.value
-  if (!el) return
-  atTop.value = el.scrollTop <= 1
-  atBottom.value = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-}
-onMounted(() => {
-  nextTick(updateShadows)
-  window.setTimeout(updateShadows, 150)
-})
+// Edge-fade shadows hint that there's more content above/below the fold.
+const scrollBody = useTemplateRef<HTMLElement>('scrollBody')
+const { atTop, atBottom, update } = useScrollShadows(scrollBody)
 </script>
 
 <template>
@@ -80,9 +70,9 @@ onMounted(() => {
          label scrolls with the rows and content fades out under each divider. -->
     <div class="relative min-h-0 flex-1">
       <div
-        ref="scrollEl"
+        ref="scrollBody"
         class="scroll-thin h-full overflow-y-auto px-4"
-        @scroll="updateShadows"
+        @scroll="update"
       >
         <div class="flex flex-col gap-3 py-5">
           <div class="flex items-center justify-between">
