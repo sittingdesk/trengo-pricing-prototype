@@ -134,19 +134,32 @@ function continueToCheckout() {
         <div class="flex flex-col gap-2">
           <p class="text-ds-xs font-semibold text-grey-600">Seats & usage</p>
           <ul class="flex flex-col gap-3">
-            <li v-for="a in addOns" :key="a.id" class="flex items-center gap-3">
-              <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <p class="text-ds-sm-emphasis text-grey-900">{{ a.name }}</p>
-                <p class="text-ds-xs text-grey-600">
-                  €{{ addOnUnit(a, period, plan) }}/mo {{ a.per }} · {{ a.note }}
-                </p>
-              </div>
-              <Stepper
-                v-model="qty[a.id]"
-                :label="a.name.toLowerCase()"
-                :min="a.id === 'user-seat' ? seatFloor : 0"
-              />
-            </li>
+            <template v-for="a in addOns" :key="a.id">
+              <li class="flex items-center gap-3">
+                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <p class="text-ds-sm-emphasis text-grey-900">{{ a.name }}</p>
+                  <p class="text-ds-xs text-grey-600">
+                    €{{ addOnUnit(a, period, plan) }}/mo {{ a.per }} · {{ a.note }}
+                  </p>
+                </div>
+                <Stepper
+                  v-model="qty[a.id]"
+                  :label="a.name.toLowerCase()"
+                  :min="a.id === 'user-seat' ? seatFloor : 0"
+                />
+              </li>
+              <!-- Seat floor: explained right beneath the User Seat row -->
+              <li v-if="a.id === 'user-seat' && atSeatFloor">
+                <div class="flex items-center gap-2 rounded-lg bg-grey-200 p-3">
+                  <Icon name="info" :size="20" class="shrink-0 text-grey-700" />
+                  <p class="text-ds-xs text-grey-700">
+                    You have {{ account.users }} users. {{ plan.name }} includes
+                    {{ plan.includedUsers }} — keep at least {{ seatFloor }} add-on seats,
+                    or remove users to go lower.
+                  </p>
+                </div>
+              </li>
+            </template>
           </ul>
         </div>
 
@@ -164,19 +177,6 @@ function continueToCheckout() {
               <Switch v-model="enabled[f.id]" :aria-label="f.name" />
             </li>
           </ul>
-        </div>
-
-        <!-- Seat floor: can't go below seats already in use -->
-        <div
-          v-if="atSeatFloor"
-          class="flex items-center gap-2 rounded-lg bg-grey-200 p-3"
-        >
-          <Icon name="info" :size="20" class="shrink-0 text-grey-700" />
-          <p class="text-ds-xs text-grey-700">
-            You have {{ account.users }} users. {{ plan.name }} includes
-            {{ plan.includedUsers }} — keep at least {{ seatFloor }} add-on seats, or
-            remove users to go lower.
-          </p>
         </div>
             </div>
           </div>
