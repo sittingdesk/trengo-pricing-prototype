@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import Icon from '@/components/Icon.vue'
 import { iterations } from '@/data/iterations'
+import { useIteration } from '@/composables/useIteration'
 
-// Prototype-only version switcher (bottom-left). Currently a single iteration.
-const currentId = ref(iterations[0].id)
+// Prototype-only version switcher (bottom-left).
+const { current: currentId } = useIteration()
 const currentLabel = computed(
   () => iterations.find((i) => i.id === currentId.value)?.label ?? '',
 )

@@ -21,7 +21,7 @@ export interface PeriodPrice {
 }
 
 export interface Plan {
-  id: 'boost' | 'pro' | 'enterprise'
+  id: 'start' | 'boost' | 'pro' | 'enterprise'
   name: string
   /** Base price per month; null on each period for custom (Enterprise). */
   base: { monthly: number | null; annually: number | null }
@@ -54,6 +54,24 @@ export const billingOptions: { value: BillingPeriod; label: string; note?: strin
 ]
 
 export const plans: Plan[] = [
+  {
+    id: 'start',
+    name: 'Start',
+    base: { monthly: 99, annually: 79 },
+    includedUsers: 3,
+    includedConversations: 200,
+    additionalSeat: { monthly: 20, annually: 18 },
+    seatNote: 'Incl. 3 users seats',
+    priceSuffix: '/month',
+    features: [
+      { label: '1 communication channel' },
+      { label: '200 conversations /month' },
+      { label: 'Unified inbox' },
+      { label: 'Messaging support' },
+    ],
+    cta: { label: 'Choose Start', variant: 'outline' },
+    activatable: true,
+  },
   {
     id: 'boost',
     name: 'Boost',

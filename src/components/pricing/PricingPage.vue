@@ -8,13 +8,27 @@ import PlanCard from '@/components/pricing/PlanCard.vue'
 import BoostResolutionCard from '@/components/pricing/BoostResolutionCard.vue'
 import AddOnsModal from '@/components/pricing/AddOnsModal.vue'
 import SalesDialog from '@/components/pricing/SalesDialog.vue'
+import EnterpriseBand from '@/components/pricing/EnterpriseBand.vue'
 import { plans, trial, type Plan } from '@/data/plans'
 import { account } from '@/data/account'
 import { usePricingFlow } from '@/composables/usePricingFlow'
+import { useIteration } from '@/composables/useIteration'
 
 const { state, enterResolution, closeResolution } = usePricingFlow()
 const boostHasBlockers = computed(() => state.blockers.some((b) => !b.disabled))
-const boostPlan = computed(() => plans.find((p) => p.id === 'boost')!)
+const byId = (id: Plan['id']) => plans.find((p) => p.id === id)!
+const boostPlan = computed(() => byId('boost'))
+
+// Iteration 1 = current 3 columns (Boost/Pro/Enterprise).
+// Iteration 2 = 4 plans: Start/Boost/Pro columns + Enterprise as a band.
+const { current: iteration } = useIteration()
+const isV2 = computed(() => iteration.value === 2)
+const columnPlans = computed(() =>
+  isV2.value
+    ? [byId('start'), byId('boost'), byId('pro')]
+    : [byId('boost'), byId('pro'), byId('enterprise')],
+)
+const bandPlan = computed(() => (isV2.value ? byId('enterprise') : null))
 
 // Dialogs — Boost and Pro both use the Add-ons modal (with their own prices).
 const addOnsOpen = ref(false)
@@ -74,7 +88,7 @@ function onChoose(plan: Plan) {
 
         <!-- Plan cards (Boost slot swaps to the resolution view) -->
         <div class="grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
-          <template v-for="plan in plans" :key="plan.id">
+          <template v-for="plan in columnPlans" :key="plan.id">
             <Transition name="card-fade" mode="out-in">
               <BoostResolutionCard
                 v-if="plan.id === 'boost' && state.boostResolving"
@@ -85,6 +99,9 @@ function onChoose(plan: Plan) {
             </Transition>
           </template>
         </div>
+
+        <!-- Iteration 2: Custom/Enterprise as a full-width band -->
+        <EnterpriseBand v-if="bandPlan" :plan="bandPlan" @contact="salesOpen = true" />
 
         <!-- Inline banner -->
         <div class="flex items-center gap-2 rounded-lg border border-border bg-muted p-3">

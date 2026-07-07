@@ -7,4 +7,7 @@ export interface Iteration {
   label: string
 }
 
-export const iterations: Iteration[] = [{ id: 1, label: 'Iteration 1' }]
+export const iterations: Iteration[] = [
+  { id: 1, label: 'Iteration 1' },
+  { id: 2, label: 'Iteration 2' },
+]
