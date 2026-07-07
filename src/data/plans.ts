@@ -139,4 +139,5 @@ export const trial = {
   title: 'You are on a free trial',
   description: 'Pick a plan to continue using Trengo after December 14, 2026',
   daysLeft: 1,
+  endsOn: 'December 14, 2026',
 }

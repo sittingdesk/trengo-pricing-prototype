@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Button } from '@/components/ui/button'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import Icon from '@/components/Icon.vue'
 import BillingToggle from '@/components/pricing/BillingToggle.vue'
 import PlanCard from '@/components/pricing/PlanCard.vue'
@@ -61,31 +66,27 @@ function onChoose(plan: Plan) {
       <!-- Sticky frosted header (§7.2 pattern) -->
       <header class="sticky top-0 z-10 bg-background/80 backdrop-blur-[12px]">
         <div class="mx-auto flex max-w-[868px] items-center justify-between gap-3 px-6 py-6">
-          <h1 class="text-ds-h3 text-grey-900">Choose a plan</h1>
+          <div class="flex min-w-0 items-center gap-3">
+            <h1 class="text-ds-h3 text-grey-900">Choose a plan</h1>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <span
+                  class="inline-flex shrink-0 items-center gap-1 rounded-full bg-purple-200 px-2 py-1 text-purple-800"
+                >
+                  <Icon name="arrow-up-circle" :size="16" />
+                  <span class="text-ds-xs font-semibold">
+                    {{ trial.daysLeft }} day{{ trial.daysLeft === 1 ? '' : 's' }} left
+                  </span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Free trial ends {{ trial.endsOn }}</TooltipContent>
+            </Tooltip>
+          </div>
           <BillingToggle v-model="state.period" />
         </div>
       </header>
 
       <div class="mx-auto flex max-w-[868px] flex-col gap-4 px-6 pb-12">
-        <!-- Free-trial banner -->
-        <div class="flex items-center gap-3 rounded-lg border border-border bg-card px-5 py-4">
-          <div
-            class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white text-grey-700"
-          >
-            <Icon name="package" :size="24" />
-          </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <p class="text-ds-title text-grey-800">{{ trial.title }}</p>
-            <p class="text-ds-sm text-grey-700">{{ trial.description }}</p>
-          </div>
-          <span
-            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-purple-200 px-2 py-1 text-purple-800"
-          >
-            <Icon name="arrow-up-circle" :size="16" />
-            <span class="text-ds-xs font-semibold">{{ trial.daysLeft }} days left</span>
-          </span>
-        </div>
-
         <!-- Plan cards (Boost slot swaps to the resolution view) -->
         <div class="grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
           <template v-for="plan in columnPlans" :key="plan.id">
