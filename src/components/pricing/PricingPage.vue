@@ -104,8 +104,8 @@ function onChoose(plan: Plan) {
         <!-- Iteration 2: Custom/Enterprise as a full-width band -->
         <EnterpriseBand v-if="bandPlan" :plan="bandPlan" @contact="salesOpen = true" />
 
-        <!-- Inline banner -->
-        <div class="flex items-center gap-2 rounded-lg border border-border bg-muted p-3">
+        <!-- Inline banner (hidden in Iteration 2) -->
+        <div v-if="!isV2" class="flex items-center gap-2 rounded-lg border border-border bg-muted p-3">
           <Icon name="info" :size="24" class="shrink-0 text-grey-700" />
           <p class="flex-1 text-ds-sm text-grey-800">
             Want a more detailed list of all the features and capabilities per plan?
