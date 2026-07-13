@@ -16,11 +16,20 @@ export interface FlowState {
   boostResolving: boolean
   /** Re-check passed — show the Ready (success) state. */
   boostPassed: boolean
+  /** Integrations disabled in-modal (Iterations 1–3). */
   blockers: ResolvableBlocker[]
+  /** Blockers only switchable in Settings (Iteration 3 resume flow). */
+  settingsBlockers: ResolvableBlocker[]
+  /** Iteration 3: user left for Settings mid-flow — show the resume banner. */
+  resumePending: boolean
 }
 
 function seedBlockers(): ResolvableBlocker[] {
   return account.boostBlockers.map((b) => ({ ...b, disabled: false }))
+}
+
+function seedSettings(): ResolvableBlocker[] {
+  return account.settingsBlockers.map((b) => ({ ...b, disabled: false }))
 }
 
 const state = reactive<FlowState>({
@@ -28,6 +37,8 @@ const state = reactive<FlowState>({
   boostResolving: false,
   boostPassed: false,
   blockers: seedBlockers(),
+  settingsBlockers: seedSettings(),
+  resumePending: false,
 })
 
 export function usePricingFlow() {
@@ -43,6 +54,13 @@ export function usePricingFlow() {
       // Re-seed so the blocked flow is replayable within the session.
       state.blockers = seedBlockers()
     },
+    /** Re-seed blockers to all-active (Iteration 3 modal opens fresh each time). */
+    resetBlockers() {
+      state.blockers = seedBlockers()
+      state.settingsBlockers = seedSettings()
+      state.boostPassed = false
+      state.resumePending = false
+    },
     /**
      * Re-check re-queries entitlements. In production the backend reports what
      * is now clear; here we simulate the admin having switched everything off
@@ -50,6 +68,7 @@ export function usePricingFlow() {
      */
     resolveAll() {
       state.blockers.forEach((b) => (b.disabled = true))
+      state.settingsBlockers.forEach((b) => (b.disabled = true))
       state.boostPassed = true
     },
   }

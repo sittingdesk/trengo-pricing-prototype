@@ -13,6 +13,12 @@ export interface PlanFeature {
   label: string
   /** First "Everything in X +" line is emphasised (grey-800 semibold). */
   emphasized?: boolean
+  /**
+   * Conversation-quota line — rendered from `includedConversations` and the
+   * billing period (annual view shows the yearly total), so the copy can't
+   * drift from the data. `label` is the monthly fallback text.
+   */
+  conversations?: true
 }
 
 export interface PeriodPrice {
@@ -65,7 +71,7 @@ export const plans: Plan[] = [
     priceSuffix: '/month',
     features: [
       { label: '1 communication channel' },
-      { label: '200 conversations /month' },
+      { label: '200 conversations /month', conversations: true },
       { label: 'Unified inbox' },
       { label: 'Messaging support' },
     ],
@@ -82,7 +88,7 @@ export const plans: Plan[] = [
     seatNote: 'Incl. 10 users seats',
     priceSuffix: '/month',
     features: [
-      { label: '500 conversations /month' },
+      { label: '500 conversations /month', conversations: true },
       { label: 'Unified inbox' },
       { label: 'AI Agents' },
       { label: 'Role-based permissions' },
@@ -103,7 +109,7 @@ export const plans: Plan[] = [
     priceSuffix: '/month',
     features: [
       { label: 'Everything in Boost +', emphasized: true },
-      { label: '1500 conversations /month' },
+      { label: '1500 conversations /month', conversations: true },
       { label: 'Custom integrations' },
       { label: 'External AI Actions' },
       { label: 'SSO & Mandatory 2FA' },

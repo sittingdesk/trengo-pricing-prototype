@@ -24,6 +24,12 @@ export interface Account {
   conversationOverage: number
   /** Features that block Boost. Seeded large to exercise the scrolling list. */
   boostBlockers: Blocker[]
+  /**
+   * Blockers that CANNOT be switched off from the pricing modal — they live in
+   * Settings. We show the breadcrumb locator only (no link); the admin toggles
+   * them in Settings and returns (Iteration 3 resume flow).
+   */
+  settingsBlockers: Blocker[]
 }
 
 export const account: Account = {
@@ -37,5 +43,10 @@ export const account: Account = {
     { id: 'booking-expert', name: 'Booking Expert · Reservations', path: 'Settings › Integrations' },
     { id: 'shopify', name: 'Shopify · Orders', path: 'Settings › Integrations' },
     { id: 'mailchimp', name: 'Mailchimp · Audiences', path: 'Settings › Integrations' },
+  ],
+  // Boost includes 1 voice channel; this account has 2 — the extra one can only
+  // be removed in Settings, not from the modal.
+  settingsBlockers: [
+    { id: 'voice-channel', name: 'Voice channel', path: 'Settings › Channels › Voice' },
   ],
 }

@@ -89,11 +89,13 @@ export const featureAddOns: FeatureAddOn[] = [
   },
 ]
 
-/** Default quantities: User Seat pre-filled to cover current users (spec §6). */
-export function defaultQuantities(plan: Plan, account: Account): Record<string, number> {
-  const includedUsers = plan.includedUsers ?? 0
+/**
+ * Default quantities: the User Seat stepper shows the account's ACTUAL user
+ * count (the plan's included seats are subtracted at billing time, not here).
+ */
+export function defaultQuantities(_plan: Plan, account: Account): Record<string, number> {
   return {
-    'user-seat': Math.max(0, account.users - includedUsers),
+    'user-seat': account.users,
     'observer-seat': 0,
     conversations: 0,
     'carrier-credits': 0,

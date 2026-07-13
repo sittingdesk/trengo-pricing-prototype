@@ -3,15 +3,37 @@ import { computed } from 'vue'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import type { BillingPeriod, Plan } from '@/data/plans'
+import type { BillingPeriod, Plan, PlanFeature } from '@/data/plans'
 
-const props = defineProps<{ plan: Plan; period: BillingPeriod }>()
+const props = defineProps<{
+  plan: Plan
+  period: BillingPeriod
+  /** Mid-flow state (Iteration 3 resume): overrides the CTA label. */
+  pending?: { label: string; note?: string }
+}>()
 const emit = defineEmits<{ choose: [plan: Plan] }>()
 
 const price = computed(() => {
   const base = props.plan.base[props.period]
   return base === null ? props.plan.customLabel : `€${base}`
 })
+
+// Annual view keeps the monthly-equivalent hero price but must disclose the
+// actual invoice total — no sticker shock at checkout.
+const billedNote = computed(() => {
+  const base = props.plan.base[props.period]
+  if (props.period !== 'annually' || base === null) return null
+  return `Billed annually as €${(base * 12).toLocaleString('en-US')}`
+})
+
+// Conversation quota is data-driven: yearly total on the annual view.
+function featureLabel(feature: PlanFeature): string {
+  const n = props.plan.includedConversations
+  if (!feature.conversations || n === null) return feature.label
+  return props.period === 'annually'
+    ? `${(n * 12).toLocaleString('en-US')} conversations /year`
+    : `${n.toLocaleString('en-US')} conversations /month`
+}
 
 // Detail line: computed seat add-on for paid plans (fixes the €18 copy bug),
 // static copy for custom plans.
@@ -41,6 +63,7 @@ const detail = computed(() =>
             plan.priceSuffix
           }}</span>
         </p>
+        <p v-if="billedNote" class="text-ds-xs text-grey-600">{{ billedNote }}</p>
         <p class="text-ds-sm italic text-grey-600">{{ plan.seatNote }}</p>
       </div>
       <p class="min-h-10 text-ds-sm text-grey-700">{{ detail }}</p>
@@ -55,17 +78,20 @@ const detail = computed(() =>
         :key="feature.label"
         :class="feature.emphasized ? 'text-ds-sm-emphasis text-grey-800' : 'text-ds-sm text-grey-600'"
       >
-        {{ feature.label }}
+        {{ featureLabel(feature) }}
       </li>
     </ul>
 
     <Separator />
 
-    <!-- CTA -->
-    <div class="p-5">
+    <!-- CTA (pending state swaps the label and adds a status line) -->
+    <div class="flex flex-col gap-2 p-5">
       <Button :variant="plan.cta.variant" class="w-full" @click="emit('choose', plan)">
-        {{ plan.cta.label }}
+        {{ pending ? pending.label : plan.cta.label }}
       </Button>
+      <p v-if="pending?.note" class="text-center text-ds-xs text-grey-600">
+        {{ pending.note }}
+      </p>
     </div>
   </div>
 </template>
