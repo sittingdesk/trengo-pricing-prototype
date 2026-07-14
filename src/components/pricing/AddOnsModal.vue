@@ -225,7 +225,7 @@ function continueToCheckout() {
             <DialogTitle class="text-ds-title">Not included in Boost</DialogTitle>
             <DialogDescription class="text-ds-sm text-grey-600">
               These aren't part of Boost. Switch off the premium integrations here;
-              one feature must be switched off in Settings.
+              some features must be switched off in Settings.
             </DialogDescription>
           </DialogHeader>
 
@@ -350,11 +350,11 @@ function continueToCheckout() {
 
             <!-- The Settings step + close (integrations are handled inline above) -->
             <div v-else-if="settingsPending" class="flex flex-col gap-3">
-              <div class="flex items-center gap-2 rounded-lg bg-grey-200 p-3">
-                <Icon name="info" :size="20" class="shrink-0 text-grey-700" />
-                <p class="text-ds-xs text-grey-700">
+              <div class="flex items-center gap-2 rounded-lg bg-sky-200 p-3">
+                <Icon name="info" :size="20" class="shrink-0 text-sky-700" />
+                <p class="text-ds-xs text-sky-800">
                   Some features can't be switched off from this page. Once they're
-                  switched off, resume from the banner.
+                  switched off, continue from the Boost plan.
                 </p>
               </div>
               <Button variant="outline" class="w-full" @click="open = false">Got it</Button>
