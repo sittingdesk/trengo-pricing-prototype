@@ -48,5 +48,6 @@ export const account: Account = {
   // be removed in Settings, not from the modal.
   settingsBlockers: [
     { id: 'voice-channel', name: 'Voice channel', path: 'Settings › Channels › Voice' },
+    { id: 'voice-31620342584', name: 'Voice (+31620342584)', path: 'Settings › Channels › Voice' },
   ],
 }

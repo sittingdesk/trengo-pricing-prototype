@@ -266,14 +266,15 @@ function continueToCheckout() {
                   <Separator class="-mx-3 self-stretch bg-grey-300 data-[orientation=horizontal]:w-auto" />
                   <ul class="flex flex-col gap-3">
                     <li v-for="b in state.blockers" :key="b.id" class="flex items-center gap-2">
-                      <Icon
-                        name="check"
-                        :size="16"
-                        class="shrink-0"
-                        :class="b.disabled ? 'text-grey-400' : 'text-grey-700'"
-                      />
+                      <!-- Check reveals on removal; width animates so the text slides right -->
                       <span
-                        class="min-w-0 flex-1 text-ds-sm-emphasis"
+                        class="grid shrink-0 place-items-center overflow-hidden transition-all duration-300"
+                        :class="b.disabled ? 'w-4' : '-mr-2 w-0'"
+                      >
+                        <Icon name="check" :size="16" class="size-4 shrink-0 text-grey-400" />
+                      </span>
+                      <span
+                        class="min-w-0 flex-1 text-ds-sm-emphasis transition-colors duration-300"
                         :class="b.disabled ? 'text-grey-400 line-through' : 'text-grey-900'"
                       >
                         {{ b.name }}
@@ -290,6 +291,18 @@ function continueToCheckout() {
                       Switch off in Settings
                       <span class="font-normal">· {{ state.settingsBlockers.length }}</span>
                     </p>
+                    <Button v-if="settingsPending" size="sm" variant="outline" :disabled="checking">
+                      Go to Settings
+                      <Icon name="arrow-up-right" :size="16" />
+                    </Button>
+                    <span v-else class="flex items-center gap-1 text-ds-xs text-grey-600">
+                      <span
+                        class="grid size-4 place-items-center rounded-full bg-grey-400 text-white"
+                      >
+                        <Icon name="check" :size="16" class="size-3" />
+                      </span>
+                      Disabled
+                    </span>
                   </div>
                   <Separator class="-mx-3 self-stretch bg-grey-300 data-[orientation=horizontal]:w-auto" />
                   <ul class="flex flex-col gap-3">
@@ -298,21 +311,22 @@ function continueToCheckout() {
                       :key="b.id"
                       class="flex items-center gap-2"
                     >
-                      <Icon
-                        name="check"
-                        :size="16"
-                        class="shrink-0"
-                        :class="b.disabled ? 'text-grey-400' : 'text-grey-700'"
-                      />
+                      <!-- Check reveals on removal; width animates so the text slides right -->
+                      <span
+                        class="grid shrink-0 place-items-center overflow-hidden transition-all duration-300"
+                        :class="b.disabled ? 'w-4' : '-mr-2 w-0'"
+                      >
+                        <Icon name="check" :size="16" class="size-4 shrink-0 text-grey-400" />
+                      </span>
                       <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span
-                          class="text-ds-sm-emphasis"
+                          class="text-ds-sm-emphasis transition-colors duration-300"
                           :class="b.disabled ? 'text-grey-400 line-through' : 'text-grey-900'"
                         >
                           {{ b.name }}
                         </span>
                         <span
-                          class="text-ds-xs"
+                          class="text-ds-xs transition-colors duration-300"
                           :class="b.disabled ? 'text-grey-400 line-through' : 'text-grey-600'"
                         >
                           {{ b.path }}
