@@ -13,8 +13,15 @@ import Stepper from '@/components/pricing/Stepper.vue'
 import { Switch } from '@/components/ui/switch'
 import Icon from '@/components/Icon.vue'
 import type { Account } from '@/data/account'
-import type { BillingPeriod, Plan } from '@/data/plans'
-import { addOns, addOnUnit, defaultQuantities, featureAddOns } from '@/data/addons'
+import { plans, type BillingPeriod, type Plan } from '@/data/plans'
+import {
+  addOns,
+  addOnUnit,
+  defaultQuantities,
+  featureAddOns,
+  featureAddOnsFor,
+} from '@/data/addons'
+import { blockersFor } from '@/data/blockers'
 import { useScrollShadows } from '@/composables/useScrollShadows'
 import { usePricingFlow } from '@/composables/usePricingFlow'
 
@@ -46,6 +53,9 @@ const checking = ref(false)
 
 const integrationsPending = computed(() => state.blockers.some((b) => !b.disabled))
 const settingsPending = computed(() => state.settingsBlockers.some((b) => !b.disabled))
+const inModalLabel = computed(
+  () => blockersFor(props.plan, props.account.users)?.inModal.label ?? 'Integrations',
+)
 
 // Reset state each time the modal opens (incl. if it mounts already-open) or
 // when it switches mode while open (success → add-ons handoff).
@@ -65,7 +75,7 @@ watch(
         })
         return
       }
-      resetBlockers() // fresh all-active list each open
+      resetBlockers(props.plan) // fresh all-active list each open
     } else {
       Object.assign(qty, defaultQuantities(props.plan, props.account))
       featureAddOns.forEach((f) => (enabled[f.id] = false))
@@ -152,6 +162,17 @@ const billedSeats = computed(() =>
   Math.max(0, (qty['user-seat'] ?? 0) - includedSeats.value),
 )
 
+// Seat ceiling (Base): name the limit and the next plan up — expansion driver #1.
+const ceilingNote = computed(() => {
+  const max = props.plan.maxUsers
+  if (max === undefined) return null
+  const boostSeats = plans.find((p) => p.id === 'boost')?.includedUsers
+  return `${props.plan.name} allows up to ${max} users. Need more? Boost includes ${boostSeats}.`
+})
+
+// Capability add-ons offered on this plan (e.g. AI Journeys only on Base).
+const availableFeatures = computed(() => featureAddOnsFor(props.plan))
+
 const lines = computed(() =>
   addOns
     .map((a) => {
@@ -174,7 +195,7 @@ const lines = computed(() =>
 )
 
 const featureLines = computed(() =>
-  featureAddOns
+  availableFeatures.value
     .filter((f) => enabled[f.id])
     .map((f) => ({ id: f.id, name: f.name, price: f.price[props.period] })),
 )
@@ -210,21 +231,21 @@ function continueToCheckout() {
           >
             <Icon name="check" :size="24" />
           </span>
-          <p class="text-ds-base text-grey-900">You're set for Boost</p>
+          <p class="text-ds-base text-grey-900">You're set for {{ plan.name }}</p>
           <p class="text-ds-sm text-grey-600">
-            Everything that isn't in Boost has been switched off. Next, tailor your
-            seats and add-ons.
+            Everything that isn't in {{ plan.name }} has been switched off. Next, tailor
+            your seats and add-ons.
           </p>
           <Button class="mt-2" @click="emit('configure')">Continue to add-ons</Button>
           <Button variant="ghost" @click="open = false">Back to plans</Button>
         </div>
 
-        <!-- List: disable everything not included in Boost -->
+        <!-- List: disable everything not included in the chosen plan -->
         <template v-else>
           <DialogHeader class="pb-4">
-            <DialogTitle class="text-ds-title">Not included in Boost</DialogTitle>
+            <DialogTitle class="text-ds-title">Not included in {{ plan.name }}</DialogTitle>
             <DialogDescription class="text-ds-sm text-grey-600">
-              These aren't part of Boost. Switch off the premium integrations here;
+              These aren't part of {{ plan.name }}. Switch off the integrations here;
               some features must be switched off in Settings.
             </DialogDescription>
           </DialogHeader>
@@ -238,12 +259,12 @@ function continueToCheckout() {
               @scroll="update"
             >
               <div class="flex flex-col gap-3 py-4">
-                <!-- Premium integrations: one section — header (label + scoped
-                     bulk action), subtle divider, then the rows -->
+                <!-- In-modal group: one section — header (label + scoped bulk
+                     action), subtle divider, then the rows -->
                 <div class="flex flex-col gap-3 rounded-lg border border-grey-300 bg-grey-200 p-3">
                   <div class="flex items-center justify-between gap-2">
                     <p class="text-ds-xs font-semibold text-grey-600">
-                      Premium integrations
+                      {{ inModalLabel }}
                       <span class="font-normal">· {{ state.blockers.length }}</span>
                     </p>
                     <Button
@@ -368,7 +389,7 @@ function continueToCheckout() {
                 <Icon name="info" :size="20" class="shrink-0 text-sky-700" />
                 <p class="text-ds-xs text-sky-800">
                   Some features can't be switched off from this page. Once they're
-                  switched off, continue from the Boost plan.
+                  switched off, continue from the {{ plan.name }} plan.
                 </p>
               </div>
               <Button variant="outline" class="w-full" @click="open = false">Got it</Button>
@@ -435,6 +456,7 @@ function continueToCheckout() {
                   v-model="qty[a.id]"
                   :label="a.name.toLowerCase()"
                   :min="a.id === 'user-seat' ? seatFloor : 0"
+                  :max="a.id === 'user-seat' ? (plan.maxUsers ?? 999) : 999"
                 />
               </li>
               <!-- Seat floor: explained right beneath the User Seat row -->
@@ -445,6 +467,7 @@ function continueToCheckout() {
                     You have {{ account.users }} users, and {{ plan.name }} includes
                     {{ plan.includedUsers }} seats — you're billed for the
                     {{ billedSeats }} above that. Remove users to lower this.
+                    <template v-if="ceilingNote">{{ ceilingNote }}</template>
                   </p>
                   <button
                     type="button"
@@ -463,7 +486,7 @@ function continueToCheckout() {
         <div class="flex flex-col gap-2">
           <p class="text-ds-xs font-semibold text-grey-600">Additional features</p>
           <ul class="flex flex-col gap-3">
-            <li v-for="f in featureAddOns" :key="f.id" class="flex items-center gap-3">
+            <li v-for="f in availableFeatures" :key="f.id" class="flex items-center gap-3">
               <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p class="text-ds-sm-emphasis text-grey-900">{{ f.name }}</p>
                 <p class="text-ds-xs text-grey-600">
@@ -494,7 +517,7 @@ function continueToCheckout() {
           <!-- Live price summary -->
           <div class="flex flex-col gap-2">
             <div class="flex items-baseline justify-between text-ds-sm text-grey-700">
-              <span>{{ plan.name }} base</span>
+              <span>{{ plan.name }} plan</span>
             <span>€{{ base }}/mo</span>
           </div>
           <div

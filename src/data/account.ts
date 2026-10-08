@@ -30,6 +30,8 @@ export interface Account {
    * them in Settings and returns (Iteration 3 resume flow).
    */
   settingsBlockers: Blocker[]
+  /** Settings-only blockers specific to Base (the seat-ceiling row is computed). */
+  baseSettingsBlockers: Blocker[]
 }
 
 export const account: Account = {
@@ -49,5 +51,10 @@ export const account: Account = {
   settingsBlockers: [
     { id: 'voice-channel', name: 'Voice channel', path: 'Settings › Channels › Voice' },
     { id: 'voice-31620342584', name: 'Voice (+31620342584)', path: 'Settings › Channels › Voice' },
+  ],
+  // Base allows the AI Agent in the playground only — a live agent must be
+  // unpublished in Settings.
+  baseSettingsBlockers: [
+    { id: 'ai-agent-live', name: 'AI Agent (live)', path: 'Settings › AI › AI Agents' },
   ],
 }

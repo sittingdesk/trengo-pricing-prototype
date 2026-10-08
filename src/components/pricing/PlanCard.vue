@@ -37,11 +37,13 @@ function featureLabel(feature: PlanFeature): string {
 
 // Detail line: computed seat add-on for paid plans (fixes the €18 copy bug),
 // static copy for custom plans.
-const detail = computed(() =>
-  props.plan.additionalSeat
-    ? `Additional seats will be charged €${props.plan.additionalSeat[props.period]}/month`
-    : props.plan.detail,
-)
+const detail = computed(() => {
+  const seat = props.plan.additionalSeat?.[props.period]
+  if (seat === undefined) return props.plan.detail
+  return props.plan.maxUsers !== undefined
+    ? `Up to ${props.plan.maxUsers} users. Additional seats €${seat}/month`
+    : `Additional seats will be charged €${seat}/month`
+})
 </script>
 
 <template>

@@ -16,30 +16,33 @@ import SalesDialog from '@/components/pricing/SalesDialog.vue'
 import EnterpriseBand from '@/components/pricing/EnterpriseBand.vue'
 import { plans, trial, type Plan } from '@/data/plans'
 import { account } from '@/data/account'
+import { blockersFor } from '@/data/blockers'
 import { usePricingFlow } from '@/composables/usePricingFlow'
 import { useIteration } from '@/composables/useIteration'
 
 const { state, enterResolution, closeResolution } = usePricingFlow()
 const boostHasBlockers = computed(() => state.blockers.some((b) => !b.disabled))
-// Iteration 3 also gates on the Settings-only blockers (voice channel).
-const settingsHasBlockers = computed(() => state.settingsBlockers.some((b) => !b.disabled))
 const byId = (id: Plan['id']) => plans.find((p) => p.id === id)!
 const boostPlan = computed(() => byId('boost'))
 
-// Iteration 1 = current 3 columns (Boost/Pro/Enterprise).
+// Iteration 1 = 3 columns (Boost/Pro/Enterprise).
 // Iteration 2 = 4 plans: Start/Boost/Pro columns + Enterprise as a band.
-// Iteration 3 = 3 columns again, but Boost blockers are resolved in-modal.
+// Iteration 3 = 3 columns again, but blockers are resolved in-modal.
+// Iteration 4 = Base/Boost/Pro + Enterprise band, with the in-modal flow.
 const { current: iteration } = useIteration()
-const isV3 = computed(() => iteration.value === 3)
-const fourPlan = computed(() => iteration.value === 2)
-const columnPlans = computed(() =>
-  fourPlan.value
-    ? [byId('start'), byId('boost'), byId('pro')]
-    : [byId('boost'), byId('pro'), byId('enterprise')],
-)
+const inModalFlow = computed(() => iteration.value >= 3)
+const fourPlan = computed(() => iteration.value === 2 || iteration.value === 4)
+const columnPlans = computed(() => {
+  if (iteration.value === 2) return [byId('start'), byId('boost'), byId('pro')]
+  if (iteration.value === 4) return [byId('base'), byId('boost'), byId('pro')]
+  return [byId('boost'), byId('pro'), byId('enterprise')]
+})
 const bandPlan = computed(() => (fourPlan.value ? byId('enterprise') : null))
 
-// Dialogs — Boost and Pro both use the Add-ons modal (with their own prices).
+// The add-ons step reflects users removed during a plan's blocker flow.
+const effectiveAccount = computed(() => ({ ...account, users: state.users }))
+
+// Dialogs — every self-serve plan uses the Add-ons modal (with its own prices).
 const addOnsOpen = ref(false)
 const addOnsPlan = ref<Plan>(boostPlan.value)
 const addOnsBlockerMode = ref(false)
@@ -51,45 +54,46 @@ function openAddOns(plan: Plan) {
   addOnsOpen.value = true
 }
 
-// Iteration 3: disable premium integrations in the modal (no leaving the page).
-function openBlockerModal() {
-  state.resumePending = false // fresh start → modal reseeds
-  addOnsPlan.value = boostPlan.value
+// Disable what the plan doesn't include, in the modal (no leaving the page).
+function openBlockerModal(plan: Plan) {
+  state.resumePending = false // fresh start → modal reseeds for this plan
+  addOnsPlan.value = plan
   addOnsBlockerMode.value = true
   addOnsOpen.value = true
 }
 
 // Returning from Settings — reopen where they left off; modal auto-verifies.
-function resumeBlockerModal() {
-  addOnsPlan.value = boostPlan.value
+function resumeBlockerModal(plan: Plan) {
+  addOnsPlan.value = plan
   addOnsBlockerMode.value = true
   addOnsOpen.value = true
 }
 
-// Mid-flow (Iteration 3): the Boost card itself carries the resume state.
-const boostPending = computed(() =>
-  isV3.value && state.resumePending ? { label: 'Continue' } : undefined,
-)
+// Mid-flow: the card of the plan being resolved carries the resume state.
+function pendingFor(plan: Plan) {
+  return inModalFlow.value && state.resumePending && state.flowPlanId === plan.id
+    ? { label: 'Continue' }
+    : undefined
+}
 
 function onChoose(plan: Plan) {
   if (!plan.activatable) {
     salesOpen.value = true // Enterprise → sales handoff, never Chargebee
     return
   }
-  if (plan.id === 'boost') {
-    if (isV3.value) {
-      // Iteration 3: resume if mid-flow, else start fresh, else all clear → add-ons.
-      if (state.resumePending) resumeBlockerModal()
-      else if (boostHasBlockers.value || settingsHasBlockers.value) openBlockerModal()
-      else openAddOns(plan)
-    } else if (boostHasBlockers.value) {
-      enterResolution() // Iterations 1 & 2: in-place resolution card
-    } else {
-      openAddOns(plan)
-    }
+  if (inModalFlow.value && blockersFor(plan, account.users)) {
+    // Resume if mid-flow, else all clear → add-ons, else start fresh.
+    const current = state.flowPlanId === plan.id
+    if (current && state.resumePending) resumeBlockerModal(plan)
+    else if (current && state.boostPassed) openAddOns(plan)
+    else openBlockerModal(plan)
     return
   }
-  openAddOns(plan) // Pro → same modal, Pro prices
+  if (plan.id === 'boost' && !inModalFlow.value && boostHasBlockers.value) {
+    enterResolution() // Iterations 1 & 2: in-place resolution card
+    return
+  }
+  openAddOns(plan)
 }
 </script>
 
@@ -160,7 +164,7 @@ function onChoose(plan: Plan) {
               v-else
               :plan="plan"
               :period="state.period"
-              :pending="plan.id === 'boost' ? boostPending : undefined"
+              :pending="pendingFor(plan)"
               @choose="onChoose"
             />
           </template>
@@ -195,7 +199,7 @@ function onChoose(plan: Plan) {
         v-model:open="addOnsOpen"
         :plan="addOnsPlan"
         :period="state.period"
-        :account="account"
+        :account="effectiveAccount"
         :blocker-mode="addOnsBlockerMode"
         @configure="addOnsBlockerMode = false"
       />

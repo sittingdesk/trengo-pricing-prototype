@@ -27,13 +27,15 @@ export interface PeriodPrice {
 }
 
 export interface Plan {
-  id: 'start' | 'boost' | 'pro' | 'enterprise'
+  id: 'start' | 'base' | 'boost' | 'pro' | 'enterprise'
   name: string
   /** Base price per month; null on each period for custom (Enterprise). */
   base: { monthly: number | null; annually: number | null }
   customLabel?: string
   /** Seats included in the base; null for custom. */
   includedUsers: number | null
+  /** Hard seat ceiling (included + add-on seats); absent = no ceiling. */
+  maxUsers?: number
   /** Conversations included per month; null for custom. */
   includedConversations: number | null
   /** Per-extra-seat price; null for custom. */
@@ -79,6 +81,27 @@ export const plans: Plan[] = [
     activatable: true,
   },
   {
+    // Entry-Level Plan (Q3 2026) — an on-ramp, not a destination.
+    id: 'base',
+    name: 'Base',
+    base: { monthly: 149, annually: 119 },
+    includedUsers: 3,
+    maxUsers: 5,
+    includedConversations: 100,
+    additionalSeat: { monthly: 30, annually: 25 },
+    seatNote: 'Incl. 3 users seats',
+    priceSuffix: '/month',
+    features: [
+      { label: 'All channels included' },
+      { label: '100 conversations /month', conversations: true },
+      { label: 'Quick replies, auto-replies & labels' },
+      { label: 'AI Agent playground (test only)' },
+      { label: 'Email support' },
+    ],
+    cta: { label: 'Choose Base', variant: 'outline' },
+    activatable: true,
+  },
+  {
     id: 'boost',
     name: 'Boost',
     base: { monthly: 349, annually: 299 },
@@ -91,6 +114,7 @@ export const plans: Plan[] = [
       { label: '500 conversations /month', conversations: true },
       { label: 'Unified inbox' },
       { label: 'AI Agents' },
+      { label: 'AI Journeys' },
       { label: 'Role-based permissions' },
       { label: 'Website widget' },
       { label: 'Messaging support' },

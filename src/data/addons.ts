@@ -70,6 +70,8 @@ export interface FeatureAddOn {
   note: string
   price: { monthly: number; annually: number }
   confirmed: boolean
+  /** Plans that offer this add-on; absent = every plan. */
+  plans?: Plan['id'][]
 }
 
 export const featureAddOns: FeatureAddOn[] = [
@@ -87,7 +89,20 @@ export const featureAddOns: FeatureAddOn[] = [
     price: { monthly: 20, annually: 20 },
     confirmed: false,
   },
+  {
+    // Entry-Level Plan: paid add-on on Base; included from Boost up.
+    id: 'journeys',
+    name: 'AI Journeys',
+    note: 'routing & automation',
+    price: { monthly: 59, annually: 49 },
+    confirmed: true,
+    plans: ['base'],
+  },
 ]
+
+export function featureAddOnsFor(plan: Plan): FeatureAddOn[] {
+  return featureAddOns.filter((f) => !f.plans || f.plans.includes(plan.id))
+}
 
 /**
  * Default quantities: the User Seat stepper shows the account's ACTUAL user
